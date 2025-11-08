@@ -192,7 +192,7 @@ else:
     st.warning("No risks logged yet. Please add a new risk above.")
 
 # ------------------------------------------------------
-# ⚡ Interactive Plotly Risk Heatmap (100% Streamlit Cloud Safe)
+# ⚡ Interactive Plotly Risk Heatmap (Guaranteed Safe for Streamlit Cloud)
 # ------------------------------------------------------
 import plotly.graph_objects as go
 
@@ -202,61 +202,60 @@ if not df.empty:
     st.subheader("🔥 Interactive Risk Heatmap")
 
     likelihood_labels = [1, 2, 3, 4, 5]
-    impact_labels = [5, 4, 3, 2, 1]  # reverse to show high impact at top
+    impact_labels = [5, 4, 3, 2, 1]  # high impact on top
 
-    # Build interactive heatmap
     fig = go.Figure(
         data=go.Heatmap(
             z=matrix,
             x=likelihood_labels,
             y=impact_labels,
             colorscale=[
-                [0.0, "#00A6A6"],  # teal for low
-                [0.5, "#FFD166"],  # amber for medium
-                [1.0, "#EF476F"],  # red for high
+                [0.0, "#00A6A6"],
+                [0.5, "#FFD166"],
+                [1.0, "#EF476F"],
             ],
             hovertemplate=(
                 "<b>Likelihood:</b> %{x}<br>"
                 "<b>Impact:</b> %{y}<br>"
                 "<b>Risk Count:</b> %{z}<extra></extra>"
             ),
-            showscale=True  # just keep default colorbar, no overrides
+            showscale=True
         )
     )
 
-    # Layout
+    # ✅ Set layout safely
     fig.update_layout(
-        title=dict(
-            text="📊 Organizational Risk Exposure Matrix",
-            font=dict(size=16, color="#F8F9FA", family="Segoe UI Semibold"),
-            x=0.5,
-        ),
-        xaxis=dict(
-            title="Likelihood →",
-            tickmode="array",
-            tickvals=likelihood_labels,
-            tickfont=dict(color="#D0D3D4"),
-            titlefont=dict(color="#AEB6BF", size=12),
-            showgrid=False,
-            zeroline=False,
-        ),
-        yaxis=dict(
-            title="↑ Impact",
-            tickmode="array",
-            tickvals=impact_labels,
-            tickfont=dict(color="#D0D3D4"),
-            titlefont=dict(color="#AEB6BF", size=12),
-            autorange="reversed",
-            showgrid=False,
-            zeroline=False,
-        ),
+        title="📊 Organizational Risk Exposure Matrix",
+        title_x=0.5,
+        title_font_size=16,
+        title_font_color="#F8F9FA",
         paper_bgcolor="#0E1117",
         plot_bgcolor="#0E1117",
-        hoverlabel=dict(bgcolor="#1F2937", font=dict(color="white")),
         margin=dict(l=60, r=40, t=70, b=60),
+        hoverlabel=dict(bgcolor="#1F2937", font_color="white"),
     )
 
-    # Risk zone text overlays
+    # ✅ Update axis styling separately
+    fig.update_xaxes(
+        title_text="Likelihood →",
+        tickvals=likelihood_labels,
+        tickfont=dict(color="#D0D3D4"),
+        titlefont=dict(color="#AEB6BF", size=12),
+        showgrid=False,
+        zeroline=False,
+    )
+
+    fig.update_yaxes(
+        title_text="↑ Impact",
+        tickvals=impact_labels,
+        tickfont=dict(color="#D0D3D4"),
+        titlefont=dict(color="#AEB6BF", size=12),
+        autorange="reversed",
+        showgrid=False,
+        zeroline=False,
+    )
+
+    # ✅ Add zone labels
     fig.add_annotation(x=1.1, y=4.9, text="Low", showarrow=False, font=dict(color="#6EE7B7", size=10))
     fig.add_annotation(x=3, y=3, text="Medium", showarrow=False, font=dict(color="#FFD166", size=10))
     fig.add_annotation(x=4.8, y=1.2, text="High", showarrow=False, font=dict(color="#FF6B6B", size=10))
