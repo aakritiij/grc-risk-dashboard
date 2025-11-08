@@ -192,9 +192,10 @@ else:
     st.warning("No risks logged yet. Please add a new risk above.")
 
 # ------------------------------------------------------
-# ✨ Polished & Balanced Interactive Risk Heatmap
+# ✨ Final Interactive Risk Heatmap (Cloud-Safe + Polished)
 # ------------------------------------------------------
 import plotly.graph_objects as go
+import numpy as np
 
 if not df.empty:
     matrix = build_matrix(df)
@@ -204,15 +205,26 @@ if not df.empty:
     likelihood_labels = [1, 2, 3, 4, 5]
     impact_labels = [5, 4, 3, 2, 1]  # high impact at top
 
+    # ✅ Safely handle zmax and zmin
+    try:
+        numeric_matrix = matrix.apply(pd.to_numeric, errors="coerce").fillna(0)
+        max_val = float(numeric_matrix.values.max()) if numeric_matrix.values.size > 0 else 1
+        if np.isnan(max_val) or max_val <= 0:
+            max_val = 1
+    except Exception:
+        max_val = 1
+        numeric_matrix = matrix.copy()
+
+    # --- Create the Heatmap ---
     fig = go.Figure(
         data=go.Heatmap(
-            z=matrix,
+            z=numeric_matrix,
             x=likelihood_labels,
             y=impact_labels,
             colorscale=[
-                [0.0, "#2ECC71"],  # green for low
-                [0.5, "#F4D03F"],  # yellow for medium
-                [1.0, "#E74C3C"],  # red for high
+                [0.0, "#2ECC71"],  # green
+                [0.5, "#F4D03F"],  # yellow
+                [1.0, "#E74C3C"],  # red
             ],
             hovertemplate=(
                 "<b>Likelihood:</b> %{x}<br>"
@@ -221,7 +233,7 @@ if not df.empty:
             ),
             showscale=True,
             zmin=0,
-            zmax=matrix.values.max() if matrix.values.max() > 0 else 1,
+            zmax=max_val,
         )
     )
 
@@ -235,34 +247,34 @@ if not df.empty:
         xaxis=dict(
             title="Likelihood →",
             tickvals=likelihood_labels,
-            tickfont=dict(color="#D0D3D4"),
-            titlefont=dict(color="#D0D3D4", size=13),
+            color="#D0D3D4",
             showgrid=False,
             zeroline=False,
         ),
         yaxis=dict(
             title="↑ Impact",
             tickvals=impact_labels,
-            tickfont=dict(color="#D0D3D4"),
-            titlefont=dict(color="#D0D3D4", size=13),
             autorange="reversed",
+            color="#D0D3D4",
             showgrid=False,
             zeroline=False,
         ),
         paper_bgcolor="#0E1117",
         plot_bgcolor="#0E1117",
+        font=dict(color="#EAEAEA"),
         margin=dict(l=60, r=60, t=70, b=60),
         width=550,
         height=550,
     )
 
-    # --- Risk Zone Labels ---
+    # --- Add Risk Labels ---
     fig.add_annotation(x=1, y=5, text="Low", showarrow=False, font=dict(color="#2ECC71", size=12, family="Arial Black"))
     fig.add_annotation(x=3, y=3, text="Medium", showarrow=False, font=dict(color="#F4D03F", size=12, family="Arial Black"))
     fig.add_annotation(x=5, y=1, text="High", showarrow=False, font=dict(color="#E74C3C", size=12, family="Arial Black"))
 
     # --- Display ---
     st.plotly_chart(fig, use_container_width=False)
+
 else:
     st.warning("No risks logged yet. Please add a new risk above.")
 # ------------------------------------------------------
