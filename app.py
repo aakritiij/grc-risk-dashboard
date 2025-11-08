@@ -210,21 +210,22 @@ else:
     st.warning("No risks logged yet. Please add a new risk above.")
 
 # ------------------------------------------------------
-# 🎯 Modern Professional Gradient Heatmap
+# 💼 Premium Glassy Risk Heatmap (Professional Theme)
 # ------------------------------------------------------
 if not df.empty:
     matrix = build_matrix(df)
     st.markdown("---")
     st.subheader("🔥 Risk Heatmap")
 
-    # Create a figure
-    fig, ax = plt.subplots(figsize=(5.5, 4.5))
+    # Create figure
+    fig, ax = plt.subplots(figsize=(6, 4.8))
 
-    # Define premium gradient: green → yellow → orange → red
+    # Define a smooth pro-level colormap (teal → amber → red)
     from matplotlib.colors import LinearSegmentedColormap
-    gradient_colors = ["#00c853", "#ffd600", "#ff9100", "#d50000"]
-    cmap = LinearSegmentedColormap.from_list("risk_cmap", gradient_colors, N=256)
+    gradient_colors = ["#3FC1C9", "#FFD166", "#EF476F"]
+    cmap = LinearSegmentedColormap.from_list("pro_risk_cmap", gradient_colors, N=300)
 
+    # Draw the heatmap
     sns.heatmap(
         matrix,
         annot=True,
@@ -233,32 +234,38 @@ if not df.empty:
         cbar=False,
         square=True,
         linewidths=1,
-        linecolor="#222831",
+        linecolor="rgba(255,255,255,0.08)",
         xticklabels=[1, 2, 3, 4, 5],
         yticklabels=[5, 4, 3, 2, 1],
         ax=ax,
-        annot_kws={"size": 11, "weight": "bold", "color": "#101010"},
+        annot_kws={"size": 11, "weight": "bold", "color": "#0E1117"},
     )
 
-    # Styling for pro look
-    ax.set_title("📊 Risk Exposure Matrix", fontsize=14, fontweight="bold", color="#F8F9FA", pad=12)
-    ax.set_xlabel("Likelihood →", fontsize=11, color="#C5C6C7", labelpad=8)
-    ax.set_ylabel("↑ Impact", fontsize=11, color="#C5C6C7", labelpad=8)
-    ax.tick_params(axis="both", colors="#E0E0E0", labelsize=10)
+    # Apply styling
+    ax.set_title("📊 Organizational Risk Matrix", fontsize=14, fontweight="bold", color="#E6E6E6", pad=15)
+    ax.set_xlabel("Likelihood →", fontsize=11, color="#CCCCCC", labelpad=8)
+    ax.set_ylabel("↑ Impact", fontsize=11, color="#CCCCCC", labelpad=8)
+    ax.tick_params(axis="both", colors="#E0E0E0", labelsize=9)
 
-    # Cleaner borders and matching dark background
+    # Dark background polish
     fig.patch.set_facecolor("#0E1117")
     ax.set_facecolor("#11141B")
+
+    # Remove ugly borders
     for spine in ax.spines.values():
         spine.set_visible(False)
 
-    # Add aesthetic quadrant overlays (subtle text)
-    ax.text(0.25, 0.15, "Low", color="#9be7a5", fontsize=10, fontweight="bold", transform=ax.transAxes)
-    ax.text(0.5, 0.5, "Medium", color="#ffeb99", fontsize=10, fontweight="bold", transform=ax.transAxes)
-    ax.text(0.82, 0.85, "High", color="#ff8a80", fontsize=10, fontweight="bold", transform=ax.transAxes)
+    # Add transparent text overlays (subtle, not childish)
+    ax.text(0.1, 0.15, "Low", color="#AEE1E1", fontsize=9, alpha=0.8, weight="bold", transform=ax.transAxes)
+    ax.text(0.5, 0.5, "Medium", color="#FFE29A", fontsize=9, alpha=0.8, weight="bold", transform=ax.transAxes)
+    ax.text(0.85, 0.85, "High", color="#F5A6A6", fontsize=9, alpha=0.85, weight="bold", transform=ax.transAxes)
 
-    # Display it
+    # Slight glow effect (via grid color contrast)
+    ax.grid(False)
+
+    # Display final chart
     st.pyplot(fig, use_container_width=False)
+
 
 # ------------------------------------------------------
 # AI Risk Mitigation Panel
