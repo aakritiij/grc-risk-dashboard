@@ -174,12 +174,38 @@ with st.form("risk_form"):
         st.rerun()  # Safe form clear
 
 # ------------------------------------------------------
-# Display Saved Risks
+# Saved Risks with Delete Option
 # ------------------------------------------------------
+
+
 df = load_df()
+
 st.subheader("📋 Saved Risks")
+
 if not df.empty:
+    # Display the dataframe
     st.dataframe(df, use_container_width=True)
+
+    # --- Select Risk to Delete ---
+    st.markdown("### 🗑️ Delete a Risk Record")
+    risk_options = df["risk_name"].tolist()
+    selected_risk = st.selectbox("Select a risk to delete", risk_options, index=None, placeholder="Choose a risk...")
+
+    if selected_risk:
+        st.warning(f"⚠️ You are about to delete the risk: **{selected_risk}**")
+        confirm = st.checkbox("I confirm deletion")
+
+        if confirm and st.button("Delete Selected Risk", type="primary"):
+            # Filter out the selected record
+            updated_df = df[df["risk_name"] != selected_risk]
+
+            # Save updated data
+            updated_df.to_excel("data/risk_data.xlsx", index=False)
+
+            st.success(f"✅ Risk '{selected_risk}' deleted successfully!")
+            st.rerun()
+
+    # --- Download button ---
     csv = df.to_csv(index=False).encode("utf-8")
     st.download_button(
         label="📥 Download Risk Data as CSV",
