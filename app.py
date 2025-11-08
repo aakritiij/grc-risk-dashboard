@@ -64,12 +64,6 @@ if not st.session_state.authenticated:
             margin-bottom: 1rem;
             color: #DDE6F2;
         }
-        .login-box {
-            background-color: rgba(20, 25, 40, 0.85);
-            padding: 1.2rem;
-            border-radius: 12px;
-            box-shadow: 0 0 10px rgba(0,0,0,0.4);
-        }
         .stTextInput > div > div > input {
             border-radius: 10px;
         }
