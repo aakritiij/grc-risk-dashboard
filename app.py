@@ -29,6 +29,10 @@ import numpy as np
 import uuid
 import seaborn as sns
 import matplotlib.pyplot as plt
+from matplotlib.colors import LinearSegmentedColormap
+
+# Page config (must be at top)
+st.set_page_config(page_title="GRC Risk Dashboard", layout="wide")
 
 # ----------------------------
 # 🧩 Basic Authentication System
@@ -44,9 +48,6 @@ if "authenticated" not in st.session_state:
 
 # --- LOGIN PAGE ---
 if not st.session_state.authenticated:
-    st.set_page_config(page_title="GRC Risk Dashboard", layout="wide")
-
-    # Custom CSS for layout
     st.markdown(
         """
         <style>
@@ -62,6 +63,12 @@ if not st.session_state.authenticated:
             border-radius: 10px;
             margin-bottom: 1rem;
             color: #DDE6F2;
+        }
+        .login-box {
+            background-color: rgba(20, 25, 40, 0.85);
+            padding: 1.2rem;
+            border-radius: 12px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.4);
         }
         .stTextInput > div > div > input {
             border-radius: 10px;
@@ -82,10 +89,8 @@ if not st.session_state.authenticated:
         unsafe_allow_html=True
     )
 
-    # Title
     st.markdown("<h1 style='text-align:center;'>🔐 GRC Dashboard Login</h1>", unsafe_allow_html=True)
 
-    # Demo credentials info card
     st.markdown(
         """
         <div class='demo-box'>
@@ -97,15 +102,11 @@ if not st.session_state.authenticated:
         unsafe_allow_html=True
     )
 
-    # Login form (no extra containers)
     with st.form("login_form"):
         st.markdown("<div class='login-box'>", unsafe_allow_html=True)
-
-        username = st.text_input("Username", placeholder="Enter your username")
-        password = st.text_input("Password", placeholder="Enter your password", type="password")
-
+        username = st.text_input("Username", placeholder="Enter your username", key="login_username")
+        password = st.text_input("Password", placeholder="Enter your password", type="password", key="login_password")
         submitted = st.form_submit_button("Login")
-
         st.markdown("</div>", unsafe_allow_html=True)
 
         if submitted:
@@ -115,16 +116,13 @@ if not st.session_state.authenticated:
                 st.rerun()
             else:
                 st.error("❌ Invalid username or password.")
-
     st.stop()
 
 # ------------------------------------------------------
 # DASHBOARD PAGE
 # ------------------------------------------------------
-st.set_page_config(page_title="GRC Risk Dashboard", layout="wide")
 st.title("🛡️ GRC Risk Dashboard")
 
-# Logout button
 if st.sidebar.button("🚪 Logout"):
     st.session_state.authenticated = False
     st.rerun()
@@ -132,35 +130,31 @@ if st.sidebar.button("🚪 Logout"):
 st.sidebar.info("Use this dashboard to log and analyze organizational risks.")
 
 # ------------------------------------------------------
-# Risk Entry Form
+# Risk Entry Form (auto-clearing)
 # ------------------------------------------------------
 with st.form("risk_form"):
     st.subheader("Log a New Risk")
 
-    risk_name = st.text_input("Risk Name")
-    risk_description = st.text_area("Risk Description")
-    owner = st.text_input("Risk Owner")
-
-    auto_assign_flag = st.checkbox("Auto-assign Likelihood & Impact")
+    risk_name = st.text_input("Risk Name", key="risk_name")
+    risk_description = st.text_area("Risk Description", key="risk_description")
+    owner = st.text_input("Risk Owner", key="owner")
+    auto_assign_flag = st.checkbox("Auto-assign Likelihood & Impact", key="auto_assign_flag")
 
     if not auto_assign_flag:
-        likelihood = st.slider("Likelihood (1 = Very Low, 5 = Very High)", 1, 5, 3)
-        impact = st.slider("Impact (1 = Very Low, 5 = Very High)", 1, 5, 3)
+        likelihood = st.slider("Likelihood (1 = Very Low, 5 = Very High)", 1, 5, 3, key="likelihood")
+        impact = st.slider("Impact (1 = Very Low, 5 = Very High)", 1, 5, 3, key="impact")
     else:
         likelihood, impact = None, None
 
     submitted = st.form_submit_button("Submit Risk")
 
     if submitted:
-        # Validate input
         if not risk_name or not risk_description or not owner:
             st.error("Please fill in all fields before submitting.")
             st.stop()
 
-        # Generate unique ID
         risk_id = str(uuid.uuid4())
 
-        # Auto-assign likelihood and impact if enabled
         if auto_assign_flag:
             auto_values = auto_assign(risk_description)
             if auto_values:
@@ -170,12 +164,10 @@ with st.form("risk_form"):
                 st.warning("No keyword matched for auto-assignment. Please select values manually.")
                 st.stop()
 
-        # Final validation
         if likelihood is None or impact is None:
             st.error("Likelihood and Impact values are required.")
             st.stop()
 
-        # Calculate score and prepare record
         risk_score = score_risk(likelihood, impact)
         risk_cell = f"{likelihood}x{impact}"
         record = {
@@ -190,70 +182,81 @@ with st.form("risk_form"):
             "timestamp": pd.Timestamp.now()
         }
 
-        # Save record
         save_record(record)
         st.success("✅ Risk saved successfully!")
 
-        # Refresh page
+        # Clear form fields
+        for key in ["risk_name", "risk_description", "owner", "auto_assign_flag", "likelihood", "impact"]:
+            if key in st.session_state:
+                if key in ["likelihood", "impact"]:
+                    st.session_state[key] = 3
+                elif key == "auto_assign_flag":
+                    st.session_state[key] = False
+                else:
+                    st.session_state[key] = ""
+
         st.rerun()
 
 # ------------------------------------------------------
 # Display Saved Risks
 # ------------------------------------------------------
 df = load_df()
-
 st.subheader("📋 Saved Risks")
 if not df.empty:
     st.dataframe(df, use_container_width=True)
-
-    # --- Download button ---
-    csv = df.to_csv(index=False).encode('utf-8')
+    csv = df.to_csv(index=False).encode("utf-8")
     st.download_button(
         label="📥 Download Risk Data as CSV",
         data=csv,
         file_name="risks.csv",
         mime="text/csv",
-        use_container_width=True
+        use_container_width=True,
     )
 else:
     st.warning("No risks logged yet. Please add a new risk above.")
 
 # ------------------------------------------------------
-# 🎨 Generate and Display a Sleek Heatmap
+# ✨ Modern, Professional Risk Heatmap
 # ------------------------------------------------------
 if not df.empty:
     matrix = build_matrix(df)
-
     st.markdown("---")
     st.subheader("🔥 Risk Heatmap")
 
-    # Adjusted size and style
-    fig, ax = plt.subplots(figsize=(4.8, 4.2))
+    fig, ax = plt.subplots(figsize=(5, 4.2))
+    colors = ["#5cb85c", "#f0ad4e", "#d9534f", "#b52b65"]
+    cmap = LinearSegmentedColormap.from_list("risk_cmap", colors, N=256)
+
     sns.heatmap(
         matrix,
         annot=True,
         fmt="d",
-        cmap="coolwarm",  # more vibrant than YlOrRd
+        cmap=cmap,
         cbar=False,
         square=True,
-        linewidths=0.5,
-        linecolor="black",
+        linewidths=1.2,
+        linecolor="#222831",
         xticklabels=np.arange(1, 6),
         yticklabels=list(reversed(np.arange(1, 6))),
         ax=ax
     )
 
-    # Cleaner labels and design tweaks
-    ax.set_xlabel("Likelihood", fontsize=10, labelpad=8, color="#E0E6ED")
-    ax.set_ylabel("Impact", fontsize=10, labelpad=8, color="#E0E6ED")
-    ax.set_title("📊 Risk Matrix Overview", fontsize=12, fontweight="bold", color="#E0E6ED", pad=10)
-    ax.tick_params(axis='both', labelsize=9, colors="#E0E6ED")
+    ax.set_title("📊 Risk Matrix (Impact × Likelihood)", fontsize=13, fontweight="bold", color="#F2F2F2", pad=12)
+    ax.set_xlabel("Likelihood →", fontsize=11, color="#C5C6C7", labelpad=10)
+    ax.set_ylabel("↑ Impact", fontsize=11, color="#C5C6C7", labelpad=10)
+    ax.tick_params(axis="both", labelsize=10, colors="#EDEDED")
 
-    # Dark background for matching theme
-    fig.patch.set_facecolor('#0E1117')
-    ax.set_facecolor('#11141B')
+    fig.patch.set_facecolor("#0E1117")
+    ax.set_facecolor("#11141B")
 
-    # Center heatmap nicely
+    for spine in ax.spines.values():
+        spine.set_visible(False)
+
+    # Optional risk zone hints (aesthetic only)
+    ax.text(0.15, 0.15, "Low", color="#CDE4C9", fontsize=9, fontweight="bold", transform=ax.transAxes)
+    ax.text(0.55, 0.55, "Medium", color="#F7E8A2", fontsize=9, fontweight="bold", transform=ax.transAxes)
+    ax.text(0.85, 0.85, "High", color="#F5B7B1", fontsize=9, fontweight="bold", transform=ax.transAxes)
+
     st.pyplot(fig, use_container_width=False)
 
 # ------------------------------------------------------
