@@ -192,7 +192,7 @@ else:
     st.warning("No risks logged yet. Please add a new risk above.")
 
 # ------------------------------------------------------
-# ✨ Final Interactive Risk Heatmap (Cloud-Safe + Polished)
+# ✨ Final Polished Interactive Risk Heatmap (Centered Title)
 # ------------------------------------------------------
 import plotly.graph_objects as go
 import numpy as np
@@ -205,45 +205,49 @@ if not df.empty:
     likelihood_labels = [1, 2, 3, 4, 5]
     impact_labels = [5, 4, 3, 2, 1]  # high impact at top
 
-    # ✅ Safely handle zmax and zmin
+    # ✅ Safely handle numeric matrix
     try:
         numeric_matrix = matrix.apply(pd.to_numeric, errors="coerce").fillna(0)
         max_val = float(numeric_matrix.values.max()) if numeric_matrix.values.size > 0 else 1
         if np.isnan(max_val) or max_val <= 0:
             max_val = 1
     except Exception:
-        max_val = 1
         numeric_matrix = matrix.copy()
+        max_val = 1
 
-    # --- Create the Heatmap ---
+    # --- Create Heatmap ---
     fig = go.Figure(
         data=go.Heatmap(
             z=numeric_matrix,
             x=likelihood_labels,
             y=impact_labels,
             colorscale=[
-                [0.0, "#2ECC71"],  # green
-                [0.5, "#F4D03F"],  # yellow
-                [1.0, "#E74C3C"],  # red
+                [0.0, "#2ECC71"],  # green = low
+                [0.5, "#F4D03F"],  # yellow = medium
+                [1.0, "#E74C3C"],  # red = high
             ],
-            hovertemplate=(
-                "<b>Likelihood:</b> %{x}<br>"
-                "<b>Impact:</b> %{y}<br>"
-                "<b>Risks:</b> %{z}<extra></extra>"
-            ),
+            hovertemplate="<b>Likelihood:</b> %{x}<br><b>Impact:</b> %{y}<br><b>Risks:</b> %{z}<extra></extra>",
             showscale=True,
             zmin=0,
             zmax=max_val,
+            colorbar=dict(
+                thickness=15,
+                title="Risk Level",
+                titlefont=dict(color="#EAEAEA", size=12),
+                tickfont=dict(color="#EAEAEA"),
+                outlinewidth=0
+            ),
         )
     )
 
-    # --- Layout & Style ---
+    # --- Layout & Style (with centered title inside the plot) ---
     fig.update_layout(
-        title=dict(
-            text="📊 Organizational Risk Matrix",
-            x=0.5,
-            font=dict(size=18, color="#F8F9FA"),
-        ),
+        paper_bgcolor="#0E1117",
+        plot_bgcolor="#0E1117",
+        font=dict(color="#EAEAEA"),
+        margin=dict(l=60, r=60, t=40, b=60),
+        width=600,
+        height=550,
         xaxis=dict(
             title="Likelihood →",
             tickvals=likelihood_labels,
@@ -259,18 +263,26 @@ if not df.empty:
             showgrid=False,
             zeroline=False,
         ),
-        paper_bgcolor="#0E1117",
-        plot_bgcolor="#0E1117",
-        font=dict(color="#EAEAEA"),
-        margin=dict(l=60, r=60, t=70, b=60),
-        width=550,
-        height=550,
     )
 
-    # --- Add Risk Labels ---
-    fig.add_annotation(x=1, y=5, text="Low", showarrow=False, font=dict(color="#2ECC71", size=12, family="Arial Black"))
-    fig.add_annotation(x=3, y=3, text="Medium", showarrow=False, font=dict(color="#F4D03F", size=12, family="Arial Black"))
-    fig.add_annotation(x=5, y=1, text="High", showarrow=False, font=dict(color="#E74C3C", size=12, family="Arial Black"))
+    # --- Centered Title Annotation ---
+    fig.add_annotation(
+        text="📊 Organizational Risk Matrix",
+        x=3,  # horizontally centered
+        y=5.6,  # slightly above the top cell
+        xref="x",
+        yref="y",
+        showarrow=False,
+        font=dict(size=16, color="#F8F9FA", family="Arial Black"),
+    )
+
+    # --- Add Risk Zone Labels ---
+    fig.add_annotation(x=1, y=5, text="Low", showarrow=False,
+                       font=dict(color="#2ECC71", size=12, family="Arial Black"))
+    fig.add_annotation(x=3, y=3, text="Medium", showarrow=False,
+                       font=dict(color="#F4D03F", size=12, family="Arial Black"))
+    fig.add_annotation(x=5, y=1, text="High", showarrow=False,
+                       font=dict(color="#E74C3C", size=12, family="Arial Black"))
 
     # --- Display ---
     st.plotly_chart(fig, use_container_width=False)
