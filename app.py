@@ -210,7 +210,7 @@ else:
     st.warning("No risks logged yet. Please add a new risk above.")
 
 # ------------------------------------------------------
-# 💼 Premium Glassy Risk Heatmap (Professional Theme)
+# 💼 Premium Glassy Risk Heatmap (Fixed + Polished)
 # ------------------------------------------------------
 if not df.empty:
     matrix = build_matrix(df)
@@ -225,7 +225,7 @@ if not df.empty:
     gradient_colors = ["#3FC1C9", "#FFD166", "#EF476F"]
     cmap = LinearSegmentedColormap.from_list("pro_risk_cmap", gradient_colors, N=300)
 
-    # Draw the heatmap
+    # Draw heatmap
     sns.heatmap(
         matrix,
         annot=True,
@@ -234,14 +234,14 @@ if not df.empty:
         cbar=False,
         square=True,
         linewidths=1,
-        linecolor="rgba(255,255,255,0.08)",
+        linecolor=(1, 1, 1, 0.08),  # ✅ Correct RGBA tuple
         xticklabels=[1, 2, 3, 4, 5],
         yticklabels=[5, 4, 3, 2, 1],
         ax=ax,
         annot_kws={"size": 11, "weight": "bold", "color": "#0E1117"},
     )
 
-    # Apply styling
+    # Styling
     ax.set_title("📊 Organizational Risk Matrix", fontsize=14, fontweight="bold", color="#E6E6E6", pad=15)
     ax.set_xlabel("Likelihood →", fontsize=11, color="#CCCCCC", labelpad=8)
     ax.set_ylabel("↑ Impact", fontsize=11, color="#CCCCCC", labelpad=8)
@@ -251,20 +251,17 @@ if not df.empty:
     fig.patch.set_facecolor("#0E1117")
     ax.set_facecolor("#11141B")
 
-    # Remove ugly borders
+    # Remove outer borders
     for spine in ax.spines.values():
         spine.set_visible(False)
 
-    # Add transparent text overlays (subtle, not childish)
+    # Add subtle overlay text (not childish!)
     ax.text(0.1, 0.15, "Low", color="#AEE1E1", fontsize=9, alpha=0.8, weight="bold", transform=ax.transAxes)
     ax.text(0.5, 0.5, "Medium", color="#FFE29A", fontsize=9, alpha=0.8, weight="bold", transform=ax.transAxes)
     ax.text(0.85, 0.85, "High", color="#F5A6A6", fontsize=9, alpha=0.85, weight="bold", transform=ax.transAxes)
 
-    # Slight glow effect (via grid color contrast)
-    ax.grid(False)
-
-    # Display final chart
     st.pyplot(fig, use_container_width=False)
+
 
 
 # ------------------------------------------------------
