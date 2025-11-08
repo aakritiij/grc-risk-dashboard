@@ -192,7 +192,7 @@ else:
     st.warning("No risks logged yet. Please add a new risk above.")
 
 # ------------------------------------------------------
-# ⚡ Interactive Risk Heatmap (Fully Compatible & Clean)
+# ✨ Polished & Balanced Interactive Risk Heatmap
 # ------------------------------------------------------
 import plotly.graph_objects as go
 
@@ -202,64 +202,69 @@ if not df.empty:
     st.subheader("🔥 Interactive Risk Heatmap")
 
     likelihood_labels = [1, 2, 3, 4, 5]
-    impact_labels = [5, 4, 3, 2, 1]  # higher impact on top
+    impact_labels = [5, 4, 3, 2, 1]  # high impact at top
 
-    # Create heatmap
     fig = go.Figure(
         data=go.Heatmap(
             z=matrix,
             x=likelihood_labels,
             y=impact_labels,
             colorscale=[
-                [0.0, "#00A6A6"],  # teal for low
-                [0.5, "#FFD166"],  # amber for medium
-                [1.0, "#EF476F"],  # red for high
+                [0.0, "#2ECC71"],  # green for low
+                [0.5, "#F4D03F"],  # yellow for medium
+                [1.0, "#E74C3C"],  # red for high
             ],
             hovertemplate=(
-                "Likelihood: %{x}<br>"
-                "Impact: %{y}<br>"
-                "Risks: %{z}<extra></extra>"
+                "<b>Likelihood:</b> %{x}<br>"
+                "<b>Impact:</b> %{y}<br>"
+                "<b>Risks:</b> %{z}<extra></extra>"
             ),
             showscale=True,
+            zmin=0,
+            zmax=matrix.values.max() if matrix.values.max() > 0 else 1,
         )
     )
 
-    # Layout — only using safe, universal properties
+    # --- Layout & Style ---
     fig.update_layout(
-        title="📊 Organizational Risk Matrix",
-        title_x=0.5,
+        title=dict(
+            text="📊 Organizational Risk Matrix",
+            x=0.5,
+            font=dict(size=18, color="#F8F9FA"),
+        ),
+        xaxis=dict(
+            title="Likelihood →",
+            tickvals=likelihood_labels,
+            tickfont=dict(color="#D0D3D4"),
+            titlefont=dict(color="#D0D3D4", size=13),
+            showgrid=False,
+            zeroline=False,
+        ),
+        yaxis=dict(
+            title="↑ Impact",
+            tickvals=impact_labels,
+            tickfont=dict(color="#D0D3D4"),
+            titlefont=dict(color="#D0D3D4", size=13),
+            autorange="reversed",
+            showgrid=False,
+            zeroline=False,
+        ),
         paper_bgcolor="#0E1117",
         plot_bgcolor="#0E1117",
-        font=dict(color="#EAEAEA"),
-        margin=dict(l=60, r=40, t=70, b=60),
+        margin=dict(l=60, r=60, t=70, b=60),
+        width=550,
+        height=550,
     )
 
-    # Basic axis settings — no nested fonts to break compatibility
-    fig.update_xaxes(
-        title="Likelihood →",
-        tickvals=likelihood_labels,
-        showgrid=False,
-        zeroline=False,
-        color="#E0E0E0"
-    )
-    fig.update_yaxes(
-        title="↑ Impact",
-        tickvals=impact_labels,
-        autorange="reversed",
-        showgrid=False,
-        zeroline=False,
-        color="#E0E0E0"
-    )
+    # --- Risk Zone Labels ---
+    fig.add_annotation(x=1, y=5, text="Low", showarrow=False, font=dict(color="#2ECC71", size=12, family="Arial Black"))
+    fig.add_annotation(x=3, y=3, text="Medium", showarrow=False, font=dict(color="#F4D03F", size=12, family="Arial Black"))
+    fig.add_annotation(x=5, y=1, text="High", showarrow=False, font=dict(color="#E74C3C", size=12, family="Arial Black"))
 
-    # Optional zone annotations
-    fig.add_annotation(x=1.2, y=4.8, text="Low", showarrow=False, font=dict(size=10, color="#6EE7B7"))
-    fig.add_annotation(x=3, y=3, text="Medium", showarrow=False, font=dict(size=10, color="#FFD166"))
-    fig.add_annotation(x=4.8, y=1.2, text="High", showarrow=False, font=dict(size=10, color="#FF6B6B"))
-
-    st.plotly_chart(fig, use_container_width=True)
+    # --- Display ---
+    st.plotly_chart(fig, use_container_width=False)
 else:
     st.warning("No risks logged yet. Please add a new risk above.")
-
 # ------------------------------------------------------
 # 🤖 AI Risk Mitigation Panel
 # ------------------------------------------------------
