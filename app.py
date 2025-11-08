@@ -192,7 +192,7 @@ else:
     st.warning("No risks logged yet. Please add a new risk above.")
 
 # ------------------------------------------------------
-# ✨ Final Polished Interactive Risk Heatmap (Centered Title)
+# ✅ Polished Interactive Risk Heatmap (Streamlit-Safe Version)
 # ------------------------------------------------------
 import plotly.graph_objects as go
 import numpy as np
@@ -203,9 +203,9 @@ if not df.empty:
     st.subheader("🔥 Interactive Risk Heatmap")
 
     likelihood_labels = [1, 2, 3, 4, 5]
-    impact_labels = [5, 4, 3, 2, 1]  # high impact at top
+    impact_labels = [5, 4, 3, 2, 1]
 
-    # ✅ Safely handle numeric matrix
+    # ✅ Ensure numeric and safe
     try:
         numeric_matrix = matrix.apply(pd.to_numeric, errors="coerce").fillna(0)
         max_val = float(numeric_matrix.values.max()) if numeric_matrix.values.size > 0 else 1
@@ -222,25 +222,19 @@ if not df.empty:
             x=likelihood_labels,
             y=impact_labels,
             colorscale=[
-                [0.0, "#2ECC71"],  # green = low
-                [0.5, "#F4D03F"],  # yellow = medium
-                [1.0, "#E74C3C"],  # red = high
+                [0.0, "#2ECC71"],  # green
+                [0.5, "#F4D03F"],  # yellow
+                [1.0, "#E74C3C"],  # red
             ],
             hovertemplate="<b>Likelihood:</b> %{x}<br><b>Impact:</b> %{y}<br><b>Risks:</b> %{z}<extra></extra>",
             showscale=True,
             zmin=0,
             zmax=max_val,
-            colorbar=dict(
-                thickness=15,
-                title="Risk Level",
-                titlefont=dict(color="#EAEAEA", size=12),
-                tickfont=dict(color="#EAEAEA"),
-                outlinewidth=0
-            ),
+            colorbar_title="Risk Level",  # ✅ safer than nested dict
         )
     )
 
-    # --- Layout & Style (with centered title inside the plot) ---
+    # --- Layout & Styling ---
     fig.update_layout(
         paper_bgcolor="#0E1117",
         plot_bgcolor="#0E1117",
@@ -265,18 +259,18 @@ if not df.empty:
         ),
     )
 
-    # --- Centered Title Annotation ---
+    # --- Centered Title Inside the Plot ---
     fig.add_annotation(
         text="📊 Organizational Risk Matrix",
-        x=3,  # horizontally centered
-        y=5.6,  # slightly above the top cell
+        x=3,
+        y=5.6,
         xref="x",
         yref="y",
         showarrow=False,
         font=dict(size=16, color="#F8F9FA", family="Arial Black"),
     )
 
-    # --- Add Risk Zone Labels ---
+    # --- Zone Labels ---
     fig.add_annotation(x=1, y=5, text="Low", showarrow=False,
                        font=dict(color="#2ECC71", size=12, family="Arial Black"))
     fig.add_annotation(x=3, y=3, text="Medium", showarrow=False,
@@ -289,6 +283,7 @@ if not df.empty:
 
 else:
     st.warning("No risks logged yet. Please add a new risk above.")
+
 # ------------------------------------------------------
 # 🤖 AI Risk Mitigation Panel
 # ------------------------------------------------------
