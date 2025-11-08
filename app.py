@@ -200,7 +200,7 @@ if not df.empty:
             updated_df = df[df["risk_name"] != selected_risk]
 
             # Save updated data
-            updated_df.to_excel("data/risk_data.xlsx", index=False)
+            updated_df.to_excel("risk_data.xlsx", index=False)
 
             st.success(f"✅ Risk '{selected_risk}' deleted successfully!")
             st.rerun()
