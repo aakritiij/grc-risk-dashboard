@@ -46,58 +46,77 @@ if "authenticated" not in st.session_state:
 if not st.session_state.authenticated:
     st.set_page_config(page_title="GRC Risk Dashboard", layout="wide")
 
-    # Center align the login box
+    # Custom CSS for nice layout
     st.markdown(
         """
         <style>
         .block-container {
-            max-width: 600px;
-            padding-top: 3rem;
+            max-width: 700px;
+            padding-top: 4rem;
             margin: auto;
         }
-        .stTextInput > div > div > input {
-            border-radius: 10px;
+        .login-box {
+            background-color: rgba(20, 25, 40, 0.8);
+            padding: 2rem;
+            border-radius: 15px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.4);
         }
-        .stTextArea > div > textarea {
+        .demo-box {
+            background-color: rgba(37, 70, 120, 0.4);
+            border-left: 4px solid #1E90FF;
+            padding: 1rem 1.2rem;
+            border-radius: 10px;
+            margin-bottom: 1rem;
+            color: #DDE6F2;
+        }
+        .stTextInput > div > div > input {
             border-radius: 10px;
         }
         .stButton > button {
             width: 100%;
             border-radius: 10px;
             font-weight: 600;
+            background-color: #1E90FF;
+            color: white;
         }
-        .stAlert {
-            border-radius: 10px;
+        .stButton > button:hover {
+            background-color: #187bcd;
+            color: white;
         }
         </style>
         """,
         unsafe_allow_html=True
     )
 
-    st.title("🔐 GRC Dashboard Login")
+    # Title and Demo Info
+    st.markdown("<h1 style='text-align:center;'>🔐 GRC Dashboard Login</h1>", unsafe_allow_html=True)
+    st.markdown(
+        """
+        <div class='demo-box'>
+        <b>👤 Demo Credentials</b><br>
+        Username: <b>admin</b><br>
+        Password: <b>secure120</b>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
 
-    # Compact demo credentials card
+    # Login Form
     with st.container():
-        st.info(
-            "👤 **Demo Credentials**<br>"
-            "Username: <code>admin</code><br>"
-            "Password: <code>secure120</code>",
-            icon="🔑"
-        )
+        with st.form("login_form"):
+            st.markdown("<div class='login-box'>", unsafe_allow_html=True)
+            username = st.text_input("Username", placeholder="Enter your username")
+            password = st.text_input("Password", placeholder="Enter your password", type="password")
+            submitted = st.form_submit_button("Login")
+            st.markdown("</div>", unsafe_allow_html=True)
 
-    # Login form with padding
-    with st.form("login_form"):
-        username = st.text_input("Username", placeholder="Enter your username")
-        password = st.text_input("Password", placeholder="Enter your password", type="password")
-        submitted = st.form_submit_button("Login")
-
-        if submitted:
-            if username == VALID_USERNAME and password == VALID_PASSWORD:
-                st.session_state.authenticated = True
-                st.success("✅ Login successful! Loading dashboard...")
-                st.rerun()
-            else:
-                st.error("❌ Invalid username or password.")
+            if submitted:
+                if username == VALID_USERNAME and password == VALID_PASSWORD:
+                    st.session_state.authenticated = True
+                    st.success("✅ Login successful! Loading dashboard...")
+                    st.rerun()
+                else:
+                    st.error("❌ Invalid username or password.")
 
     st.stop()
 
