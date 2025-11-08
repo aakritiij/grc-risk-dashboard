@@ -192,47 +192,86 @@ else:
     st.warning("No risks logged yet. Please add a new risk above.")
 
 # ------------------------------------------------------
-# 💎 Enterprise-Grade Dark Heatmap
+# ⚡ Interactive Plotly Risk Heatmap (Premium)
 # ------------------------------------------------------
+import plotly.graph_objects as go
+
 if not df.empty:
     matrix = build_matrix(df)
     st.markdown("---")
-    st.subheader("🔥 Risk Heatmap")
+    st.subheader("🔥 Interactive Risk Heatmap")
 
-    fig, ax = plt.subplots(figsize=(5.5, 4.5), dpi=150)
-    gradient = ["#002B5B", "#F6AE2D", "#D62828"]
-    cmap = LinearSegmentedColormap.from_list("enterprise_risk", gradient, N=256)
+    likelihood_labels = [1, 2, 3, 4, 5]
+    impact_labels = [5, 4, 3, 2, 1]  # top-down for correct orientation
 
-    sns.heatmap(
-        matrix,
-        cmap=cmap,
-        annot=True,
-        fmt="d",
-        cbar=False,
-        square=True,
-        linewidths=0.6,
-        linecolor="#1C1C1C",
-        xticklabels=[1, 2, 3, 4, 5],
-        yticklabels=[5, 4, 3, 2, 1],
-        ax=ax,
-        annot_kws={"size": 11, "weight": "bold", "color": "#0E1117"},
+    fig = go.Figure(
+        data=go.Heatmap(
+            z=matrix,
+            x=likelihood_labels,
+            y=impact_labels,
+            colorscale=[
+                [0.0, "#00A6A6"],  # teal for low
+                [0.5, "#FFD166"],  # amber mid
+                [1.0, "#EF476F"],  # red for high
+            ],
+            hovertemplate=(
+                "<b>Likelihood:</b> %{x}<br>"
+                "<b>Impact:</b> %{y}<br>"
+                "<b>Risk Count:</b> %{z}<extra></extra>"
+            ),
+            showscale=True,
+            colorbar=dict(
+                title="Risk Level",
+                titlefont=dict(color="#EAEAEA", size=12),
+                tickfont=dict(color="#EAEAEA", size=10),
+                thickness=12,
+                outlinewidth=0,
+            ),
+        )
     )
 
-    ax.set_title("📊 Risk Exposure Matrix", fontsize=13, fontweight="bold", color="#F8F9FA", pad=12)
-    ax.set_xlabel("Likelihood →", fontsize=10, color="#AEB6BF", labelpad=8)
-    ax.set_ylabel("↑ Impact", fontsize=10, color="#AEB6BF", labelpad=8)
-    ax.tick_params(axis="both", colors="#D0D3D4", labelsize=9)
+    fig.update_layout(
+        title=dict(
+            text="📊 Organizational Risk Exposure Matrix",
+            font=dict(size=16, color="#F8F9FA", family="Segoe UI Semibold"),
+            x=0.5,
+        ),
+        xaxis=dict(
+            title="Likelihood →",
+            tickmode="array",
+            tickvals=likelihood_labels,
+            tickfont=dict(color="#D0D3D4"),
+            titlefont=dict(color="#AEB6BF", size=12),
+            showgrid=False,
+            zeroline=False,
+        ),
+        yaxis=dict(
+            title="↑ Impact",
+            tickmode="array",
+            tickvals=impact_labels,
+            tickfont=dict(color="#D0D3D4"),
+            titlefont=dict(color="#AEB6BF", size=12),
+            autorange="reversed",
+            showgrid=False,
+            zeroline=False,
+        ),
+        paper_bgcolor="#0E1117",
+        plot_bgcolor="#0E1117",
+        hoverlabel=dict(bgcolor="#1F2937", font=dict(color="white")),
+        margin=dict(l=60, r=40, t=70, b=60),
+    )
 
-    fig.patch.set_facecolor("#0E1117")
-    ax.set_facecolor("#0E1117")
-    for spine in ax.spines.values():
-        spine.set_visible(False)
+    # Add soft labels for zones
+    annotations = [
+        dict(x=1.2, y=4.8, text="Low", showarrow=False, font=dict(color="#66E3C4", size=10, family="Segoe UI")),
+        dict(x=3, y=3, text="Medium", showarrow=False, font=dict(color="#FFD166", size=10, family="Segoe UI")),
+        dict(x=4.8, y=1.2, text="High", showarrow=False, font=dict(color="#FF6B6B", size=10, family="Segoe UI")),
+    ]
+    fig.update_layout(annotations=annotations)
 
-    ax.text(0.05, 0.1, "Low", color="#6EE7B7", fontsize=9, alpha=0.7, weight="bold", transform=ax.transAxes)
-    ax.text(0.5, 0.5, "Medium", color="#FFD166", fontsize=9, alpha=0.7, weight="bold", transform=ax.transAxes)
-    ax.text(0.88, 0.9, "High", color="#FF6B6B", fontsize=9, alpha=0.75, weight="bold", transform=ax.transAxes)
-
-    st.pyplot(fig, use_container_width=False)
+    st.plotly_chart(fig, use_container_width=True)
+else:
+    st.warning("No risks logged yet. Please add a new risk above.")
 
 # ------------------------------------------------------
 # 🤖 AI Risk Mitigation Panel
