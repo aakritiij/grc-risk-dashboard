@@ -64,6 +64,8 @@ if not st.session_state.authenticated:
 st.set_page_config(page_title="GRC Risk Dashboard", layout="wide")
 st.title("🛡️ GRC Risk Dashboard")
 
+st.info("👤 **Demo Credentials**  \nUsername: `admin`  \nPassword: `secure123`")
+
 # Logout button in sidebar
 if st.sidebar.button("🚪 Logout"):
     st.session_state.authenticated = False
