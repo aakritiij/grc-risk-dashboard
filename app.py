@@ -174,22 +174,24 @@ with st.form("risk_form"):
         st.rerun()  # Safe form clear
 
 # ------------------------------------------------------
-# Saved Risks with Delete Option
+# 📋 Saved Risks with Working Delete Option (CSV-based)
 # ------------------------------------------------------
-
-
 df = load_df()
 
 st.subheader("📋 Saved Risks")
 
 if not df.empty:
-    # Display the dataframe
     st.dataframe(df, use_container_width=True)
 
-    # --- Select Risk to Delete ---
+    # --- Select a Risk to Delete ---
     st.markdown("### 🗑️ Delete a Risk Record")
     risk_options = df["risk_name"].tolist()
-    selected_risk = st.selectbox("Select a risk to delete", risk_options, index=None, placeholder="Choose a risk...")
+    selected_risk = st.selectbox(
+        "Select a risk to delete",
+        risk_options,
+        index=None,
+        placeholder="Choose a risk..."
+    )
 
     if selected_risk:
         st.warning(f"⚠️ You are about to delete the risk: **{selected_risk}**")
@@ -199,8 +201,8 @@ if not df.empty:
             # Filter out the selected record
             updated_df = df[df["risk_name"] != selected_risk]
 
-            # Save updated data
-            updated_df.to_excel("risk_data.xlsx", index=False)
+            # ✅ Overwrite the CSV file used by helpers
+            updated_df.to_csv("risks.csv", index=False)
 
             st.success(f"✅ Risk '{selected_risk}' deleted successfully!")
             st.rerun()
@@ -216,7 +218,6 @@ if not df.empty:
     )
 else:
     st.warning("No risks logged yet. Please add a new risk above.")
-
 # ------------------------------------------------------
 # ✅ Polished Interactive Risk Heatmap (Streamlit-Safe Version)
 # ------------------------------------------------------
