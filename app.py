@@ -192,7 +192,7 @@ else:
     st.warning("No risks logged yet. Please add a new risk above.")
 
 # ------------------------------------------------------
-# ⚡ Interactive Plotly Risk Heatmap (Premium)
+# ⚡ Interactive Plotly Risk Heatmap (Polished & Fixed)
 # ------------------------------------------------------
 import plotly.graph_objects as go
 
@@ -204,15 +204,16 @@ if not df.empty:
     likelihood_labels = [1, 2, 3, 4, 5]
     impact_labels = [5, 4, 3, 2, 1]  # top-down for correct orientation
 
+    # Create interactive heatmap
     fig = go.Figure(
         data=go.Heatmap(
             z=matrix,
             x=likelihood_labels,
             y=impact_labels,
             colorscale=[
-                [0.0, "#00A6A6"],  # teal for low
-                [0.5, "#FFD166"],  # amber mid
-                [1.0, "#EF476F"],  # red for high
+                [0.0, "#00A6A6"],  # teal (low)
+                [0.5, "#FFD166"],  # amber (medium)
+                [1.0, "#EF476F"],  # red (high)
             ],
             hovertemplate=(
                 "<b>Likelihood:</b> %{x}<br>"
@@ -224,12 +225,12 @@ if not df.empty:
                 title="Risk Level",
                 titlefont=dict(color="#EAEAEA", size=12),
                 tickfont=dict(color="#EAEAEA", size=10),
-                thickness=12,
-                outlinewidth=0,
+                thickness=12
             ),
         )
     )
 
+    # Layout styling
     fig.update_layout(
         title=dict(
             text="📊 Organizational Risk Exposure Matrix",
@@ -261,17 +262,18 @@ if not df.empty:
         margin=dict(l=60, r=40, t=70, b=60),
     )
 
-    # Add soft labels for zones
+    # Add risk zone labels
     annotations = [
-        dict(x=1.2, y=4.8, text="Low", showarrow=False, font=dict(color="#66E3C4", size=10, family="Segoe UI")),
-        dict(x=3, y=3, text="Medium", showarrow=False, font=dict(color="#FFD166", size=10, family="Segoe UI")),
-        dict(x=4.8, y=1.2, text="High", showarrow=False, font=dict(color="#FF6B6B", size=10, family="Segoe UI")),
+        dict(x=1.2, y=4.8, text="Low", showarrow=False, font=dict(color="#6EE7B7", size=10)),
+        dict(x=3, y=3, text="Medium", showarrow=False, font=dict(color="#FFD166", size=10)),
+        dict(x=4.8, y=1.2, text="High", showarrow=False, font=dict(color="#FF6B6B", size=10)),
     ]
     fig.update_layout(annotations=annotations)
 
     st.plotly_chart(fig, use_container_width=True)
 else:
     st.warning("No risks logged yet. Please add a new risk above.")
+
 
 # ------------------------------------------------------
 # 🤖 AI Risk Mitigation Panel
