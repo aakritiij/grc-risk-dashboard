@@ -210,16 +210,20 @@ else:
     st.warning("No risks logged yet. Please add a new risk above.")
 
 # ------------------------------------------------------
-# ✨ Modern, Professional Risk Heatmap
+# 🎯 Modern Professional Gradient Heatmap
 # ------------------------------------------------------
 if not df.empty:
     matrix = build_matrix(df)
     st.markdown("---")
     st.subheader("🔥 Risk Heatmap")
 
-    fig, ax = plt.subplots(figsize=(5, 4.2))
-    colors = ["#5cb85c", "#f0ad4e", "#d9534f", "#b52b65"]
-    cmap = LinearSegmentedColormap.from_list("risk_cmap", colors, N=256)
+    # Create a figure
+    fig, ax = plt.subplots(figsize=(5.5, 4.5))
+
+    # Define premium gradient: green → yellow → orange → red
+    from matplotlib.colors import LinearSegmentedColormap
+    gradient_colors = ["#00c853", "#ffd600", "#ff9100", "#d50000"]
+    cmap = LinearSegmentedColormap.from_list("risk_cmap", gradient_colors, N=256)
 
     sns.heatmap(
         matrix,
@@ -228,29 +232,32 @@ if not df.empty:
         cmap=cmap,
         cbar=False,
         square=True,
-        linewidths=1.2,
+        linewidths=1,
         linecolor="#222831",
-        xticklabels=np.arange(1, 6),
-        yticklabels=list(reversed(np.arange(1, 6))),
-        ax=ax
+        xticklabels=[1, 2, 3, 4, 5],
+        yticklabels=[5, 4, 3, 2, 1],
+        ax=ax,
+        annot_kws={"size": 11, "weight": "bold", "color": "#101010"},
     )
 
-    ax.set_title("📊 Risk Matrix (Impact × Likelihood)", fontsize=13, fontweight="bold", color="#F2F2F2", pad=12)
-    ax.set_xlabel("Likelihood →", fontsize=11, color="#C5C6C7", labelpad=10)
-    ax.set_ylabel("↑ Impact", fontsize=11, color="#C5C6C7", labelpad=10)
-    ax.tick_params(axis="both", labelsize=10, colors="#EDEDED")
+    # Styling for pro look
+    ax.set_title("📊 Risk Exposure Matrix", fontsize=14, fontweight="bold", color="#F8F9FA", pad=12)
+    ax.set_xlabel("Likelihood →", fontsize=11, color="#C5C6C7", labelpad=8)
+    ax.set_ylabel("↑ Impact", fontsize=11, color="#C5C6C7", labelpad=8)
+    ax.tick_params(axis="both", colors="#E0E0E0", labelsize=10)
 
+    # Cleaner borders and matching dark background
     fig.patch.set_facecolor("#0E1117")
     ax.set_facecolor("#11141B")
-
     for spine in ax.spines.values():
         spine.set_visible(False)
 
-    # Optional risk zone hints (aesthetic only)
-    ax.text(0.15, 0.15, "Low", color="#CDE4C9", fontsize=9, fontweight="bold", transform=ax.transAxes)
-    ax.text(0.55, 0.55, "Medium", color="#F7E8A2", fontsize=9, fontweight="bold", transform=ax.transAxes)
-    ax.text(0.85, 0.85, "High", color="#F5B7B1", fontsize=9, fontweight="bold", transform=ax.transAxes)
+    # Add aesthetic quadrant overlays (subtle text)
+    ax.text(0.25, 0.15, "Low", color="#9be7a5", fontsize=10, fontweight="bold", transform=ax.transAxes)
+    ax.text(0.5, 0.5, "Medium", color="#ffeb99", fontsize=10, fontweight="bold", transform=ax.transAxes)
+    ax.text(0.82, 0.85, "High", color="#ff8a80", fontsize=10, fontweight="bold", transform=ax.transAxes)
 
+    # Display it
     st.pyplot(fig, use_container_width=False)
 
 # ------------------------------------------------------
