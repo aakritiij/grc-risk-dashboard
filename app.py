@@ -36,7 +36,7 @@ import streamlit as st
 
 # Hardcoded credentials (you can change this)
 VALID_USERNAME = "admin"
-VALID_PASSWORD = "secure123"
+VALID_PASSWORD = "secure120"
 
 # Initialize session state
 if "authenticated" not in st.session_state:
@@ -64,7 +64,7 @@ if not st.session_state.authenticated:
 st.set_page_config(page_title="GRC Risk Dashboard", layout="wide")
 st.title("🛡️ GRC Risk Dashboard")
 
-st.info("👤 **Demo Credentials**  \nUsername: `admin`  \nPassword: `secure123`")
+st.info("👤 **Demo Credentials**  \nUsername: `admin`  \nPassword: `secure120`")
 
 # Logout button in sidebar
 if st.sidebar.button("🚪 Logout"):
