@@ -45,15 +45,50 @@ if "authenticated" not in st.session_state:
 # --- LOGIN PAGE ---
 if not st.session_state.authenticated:
     st.set_page_config(page_title="GRC Risk Dashboard", layout="wide")
+
+    # Center align the login box
+    st.markdown(
+        """
+        <style>
+        .block-container {
+            max-width: 600px;
+            padding-top: 3rem;
+            margin: auto;
+        }
+        .stTextInput > div > div > input {
+            border-radius: 10px;
+        }
+        .stTextArea > div > textarea {
+            border-radius: 10px;
+        }
+        .stButton > button {
+            width: 100%;
+            border-radius: 10px;
+            font-weight: 600;
+        }
+        .stAlert {
+            border-radius: 10px;
+        }
+        </style>
+        """,
+        unsafe_allow_html=True
+    )
+
     st.title("🔐 GRC Dashboard Login")
 
-    # Display demo credentials
-    st.info("👤 **Demo Credentials**  \nUsername: `admin`  \nPassword: `secure120`")
+    # Compact demo credentials card
+    with st.container():
+        st.info(
+            "👤 **Demo Credentials**<br>"
+            "Username: <code>admin</code><br>"
+            "Password: <code>secure120</code>",
+            icon="🔑"
+        )
 
-    # Login form
+    # Login form with padding
     with st.form("login_form"):
-        username = st.text_input("Username")
-        password = st.text_input("Password", type="password")
+        username = st.text_input("Username", placeholder="Enter your username")
+        password = st.text_input("Password", placeholder="Enter your password", type="password")
         submitted = st.form_submit_button("Login")
 
         if submitted:
