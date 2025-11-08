@@ -1,6 +1,13 @@
 import importlib.util
 import os
 import sys
+import streamlit as st
+import pandas as pd
+import numpy as np
+import uuid
+import seaborn as sns
+import matplotlib.pyplot as plt
+from matplotlib.colors import LinearSegmentedColormap
 
 # --- Load Helpers ---
 HELPERS_PATH = os.path.join(os.path.dirname(__file__), "src", "grc_risk_dashboard", "helpers.py")
@@ -22,27 +29,15 @@ score_risk = helpers.score_risk
 auto_assign = helpers.auto_assign
 build_matrix = helpers.build_matrix
 
-# --- Streamlit and other imports ---
-import streamlit as st
-import pandas as pd
-import numpy as np
-import uuid
-import seaborn as sns
-import matplotlib.pyplot as plt
-from matplotlib.colors import LinearSegmentedColormap
-
 # Page config (must be at top)
 st.set_page_config(page_title="GRC Risk Dashboard", layout="wide")
 
 # ----------------------------
 # 🧩 Basic Authentication System
 # ----------------------------
-
-# Hardcoded credentials (demo)
 VALID_USERNAME = "admin"
 VALID_PASSWORD = "secure120"
 
-# Initialize session state
 if "authenticated" not in st.session_state:
     st.session_state.authenticated = False
 
@@ -84,7 +79,6 @@ if not st.session_state.authenticated:
     )
 
     st.markdown("<h1 style='text-align:center;'>🔐 GRC Dashboard Login</h1>", unsafe_allow_html=True)
-
     st.markdown(
         """
         <div class='demo-box'>
@@ -97,11 +91,9 @@ if not st.session_state.authenticated:
     )
 
     with st.form("login_form"):
-        st.markdown("<div class='login-box'>", unsafe_allow_html=True)
-        username = st.text_input("Username", placeholder="Enter your username", key="login_username")
-        password = st.text_input("Password", placeholder="Enter your password", type="password", key="login_password")
+        username = st.text_input("Username", placeholder="Enter your username")
+        password = st.text_input("Password", placeholder="Enter your password", type="password")
         submitted = st.form_submit_button("Login")
-        st.markdown("</div>", unsafe_allow_html=True)
 
         if submitted:
             if username == VALID_USERNAME and password == VALID_PASSWORD:
@@ -124,19 +116,19 @@ if st.sidebar.button("🚪 Logout"):
 st.sidebar.info("Use this dashboard to log and analyze organizational risks.")
 
 # ------------------------------------------------------
-# Risk Entry Form (auto-clearing)
+# Risk Entry Form (safe auto-clear)
 # ------------------------------------------------------
 with st.form("risk_form"):
     st.subheader("Log a New Risk")
 
-    risk_name = st.text_input("Risk Name", key="risk_name")
-    risk_description = st.text_area("Risk Description", key="risk_description")
-    owner = st.text_input("Risk Owner", key="owner")
-    auto_assign_flag = st.checkbox("Auto-assign Likelihood & Impact", key="auto_assign_flag")
+    risk_name = st.text_input("Risk Name")
+    risk_description = st.text_area("Risk Description")
+    owner = st.text_input("Risk Owner")
+    auto_assign_flag = st.checkbox("Auto-assign Likelihood & Impact")
 
     if not auto_assign_flag:
-        likelihood = st.slider("Likelihood (1 = Very Low, 5 = Very High)", 1, 5, 3, key="likelihood")
-        impact = st.slider("Impact (1 = Very Low, 5 = Very High)", 1, 5, 3, key="impact")
+        likelihood = st.slider("Likelihood (1 = Very Low, 5 = Very High)", 1, 5, 3)
+        impact = st.slider("Impact (1 = Very Low, 5 = Very High)", 1, 5, 3)
     else:
         likelihood, impact = None, None
 
@@ -178,18 +170,8 @@ with st.form("risk_form"):
 
         save_record(record)
         st.success("✅ Risk saved successfully!")
-
-        # Clear form fields
-        for key in ["risk_name", "risk_description", "owner", "auto_assign_flag", "likelihood", "impact"]:
-            if key in st.session_state:
-                if key in ["likelihood", "impact"]:
-                    st.session_state[key] = 3
-                elif key == "auto_assign_flag":
-                    st.session_state[key] = False
-                else:
-                    st.session_state[key] = ""
-
-        st.rerun()
+        st.toast("Form reset for new entry!", icon="🔄")
+        st.rerun()  # Safe form clear
 
 # ------------------------------------------------------
 # Display Saved Risks
@@ -210,62 +192,50 @@ else:
     st.warning("No risks logged yet. Please add a new risk above.")
 
 # ------------------------------------------------------
-# 💼 Premium Glassy Risk Heatmap (Fixed + Polished)
+# 💎 Enterprise-Grade Dark Heatmap
 # ------------------------------------------------------
 if not df.empty:
     matrix = build_matrix(df)
     st.markdown("---")
     st.subheader("🔥 Risk Heatmap")
 
-    # Create figure
-    fig, ax = plt.subplots(figsize=(6, 4.8))
+    fig, ax = plt.subplots(figsize=(5.5, 4.5), dpi=150)
+    gradient = ["#002B5B", "#F6AE2D", "#D62828"]
+    cmap = LinearSegmentedColormap.from_list("enterprise_risk", gradient, N=256)
 
-    # Define a smooth pro-level colormap (teal → amber → red)
-    from matplotlib.colors import LinearSegmentedColormap
-    gradient_colors = ["#3FC1C9", "#FFD166", "#EF476F"]
-    cmap = LinearSegmentedColormap.from_list("pro_risk_cmap", gradient_colors, N=300)
-
-    # Draw heatmap
     sns.heatmap(
         matrix,
+        cmap=cmap,
         annot=True,
         fmt="d",
-        cmap=cmap,
         cbar=False,
         square=True,
-        linewidths=1,
-        linecolor=(1, 1, 1, 0.08),  # ✅ Correct RGBA tuple
+        linewidths=0.6,
+        linecolor="#1C1C1C",
         xticklabels=[1, 2, 3, 4, 5],
         yticklabels=[5, 4, 3, 2, 1],
         ax=ax,
         annot_kws={"size": 11, "weight": "bold", "color": "#0E1117"},
     )
 
-    # Styling
-    ax.set_title("📊 Organizational Risk Matrix", fontsize=14, fontweight="bold", color="#E6E6E6", pad=15)
-    ax.set_xlabel("Likelihood →", fontsize=11, color="#CCCCCC", labelpad=8)
-    ax.set_ylabel("↑ Impact", fontsize=11, color="#CCCCCC", labelpad=8)
-    ax.tick_params(axis="both", colors="#E0E0E0", labelsize=9)
+    ax.set_title("📊 Risk Exposure Matrix", fontsize=13, fontweight="bold", color="#F8F9FA", pad=12)
+    ax.set_xlabel("Likelihood →", fontsize=10, color="#AEB6BF", labelpad=8)
+    ax.set_ylabel("↑ Impact", fontsize=10, color="#AEB6BF", labelpad=8)
+    ax.tick_params(axis="both", colors="#D0D3D4", labelsize=9)
 
-    # Dark background polish
     fig.patch.set_facecolor("#0E1117")
-    ax.set_facecolor("#11141B")
-
-    # Remove outer borders
+    ax.set_facecolor("#0E1117")
     for spine in ax.spines.values():
         spine.set_visible(False)
 
-    # Add subtle overlay text (not childish!)
-    ax.text(0.1, 0.15, "Low", color="#AEE1E1", fontsize=9, alpha=0.8, weight="bold", transform=ax.transAxes)
-    ax.text(0.5, 0.5, "Medium", color="#FFE29A", fontsize=9, alpha=0.8, weight="bold", transform=ax.transAxes)
-    ax.text(0.85, 0.85, "High", color="#F5A6A6", fontsize=9, alpha=0.85, weight="bold", transform=ax.transAxes)
+    ax.text(0.05, 0.1, "Low", color="#6EE7B7", fontsize=9, alpha=0.7, weight="bold", transform=ax.transAxes)
+    ax.text(0.5, 0.5, "Medium", color="#FFD166", fontsize=9, alpha=0.7, weight="bold", transform=ax.transAxes)
+    ax.text(0.88, 0.9, "High", color="#FF6B6B", fontsize=9, alpha=0.75, weight="bold", transform=ax.transAxes)
 
     st.pyplot(fig, use_container_width=False)
 
-
-
 # ------------------------------------------------------
-# AI Risk Mitigation Panel
+# 🤖 AI Risk Mitigation Panel
 # ------------------------------------------------------
 st.sidebar.markdown("### 🤖 AI Risk Mitigation Assistant")
 
