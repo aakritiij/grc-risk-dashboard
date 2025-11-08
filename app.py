@@ -55,13 +55,6 @@ if not st.session_state.authenticated:
             padding-top: 4rem;
             margin: auto;
         }
-        .login-box {
-            background-color: rgba(20, 25, 40, 0.85);
-            padding: 2rem;
-            border-radius: 15px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.4);
-            margin-top: 1rem;
-        }
         .demo-box {
             background-color: rgba(35, 55, 95, 0.8);
             border-left: 4px solid #1E90FF;
