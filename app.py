@@ -46,7 +46,7 @@ if "authenticated" not in st.session_state:
 if not st.session_state.authenticated:
     st.set_page_config(page_title="GRC Risk Dashboard", layout="wide")
 
-    # Custom CSS for nice layout
+    # Custom CSS for layout
     st.markdown(
         """
         <style>
@@ -56,15 +56,16 @@ if not st.session_state.authenticated:
             margin: auto;
         }
         .login-box {
-            background-color: rgba(20, 25, 40, 0.8);
+            background-color: rgba(20, 25, 40, 0.85);
             padding: 2rem;
             border-radius: 15px;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.4);
+            margin-top: 1rem;
         }
         .demo-box {
-            background-color: rgba(37, 70, 120, 0.4);
+            background-color: rgba(35, 55, 95, 0.8);
             border-left: 4px solid #1E90FF;
-            padding: 1rem 1.2rem;
+            padding: 1rem 1.3rem;
             border-radius: 10px;
             margin-bottom: 1rem;
             color: #DDE6F2;
@@ -88,35 +89,39 @@ if not st.session_state.authenticated:
         unsafe_allow_html=True
     )
 
-    # Title and Demo Info
+    # Title
     st.markdown("<h1 style='text-align:center;'>🔐 GRC Dashboard Login</h1>", unsafe_allow_html=True)
+
+    # Demo credentials info card
     st.markdown(
         """
         <div class='demo-box'>
-        <b>👤 Demo Credentials</b><br>
-        Username: <b>admin</b><br>
-        Password: <b>secure120</b>
+            <b>👤 Demo Credentials</b><br>
+            Username: <b>admin</b><br>
+            Password: <b>secure120</b>
         </div>
         """,
         unsafe_allow_html=True
     )
 
-    # Login Form
-    with st.container():
-        with st.form("login_form"):
-            st.markdown("<div class='login-box'>", unsafe_allow_html=True)
-            username = st.text_input("Username", placeholder="Enter your username")
-            password = st.text_input("Password", placeholder="Enter your password", type="password")
-            submitted = st.form_submit_button("Login")
-            st.markdown("</div>", unsafe_allow_html=True)
+    # Login form (no extra containers)
+    with st.form("login_form"):
+        st.markdown("<div class='login-box'>", unsafe_allow_html=True)
 
-            if submitted:
-                if username == VALID_USERNAME and password == VALID_PASSWORD:
-                    st.session_state.authenticated = True
-                    st.success("✅ Login successful! Loading dashboard...")
-                    st.rerun()
-                else:
-                    st.error("❌ Invalid username or password.")
+        username = st.text_input("Username", placeholder="Enter your username")
+        password = st.text_input("Password", placeholder="Enter your password", type="password")
+
+        submitted = st.form_submit_button("Login")
+
+        st.markdown("</div>", unsafe_allow_html=True)
+
+        if submitted:
+            if username == VALID_USERNAME and password == VALID_PASSWORD:
+                st.session_state.authenticated = True
+                st.success("✅ Login successful! Loading dashboard...")
+                st.rerun()
+            else:
+                st.error("❌ Invalid username or password.")
 
     st.stop()
 
