@@ -2,26 +2,27 @@ import importlib.util
 import os
 import sys
 
+# --- Load Helpers ---
 HELPERS_PATH = os.path.join(os.path.dirname(__file__), "src", "grc_risk_dashboard", "helpers.py")
 spec = importlib.util.spec_from_file_location("helpers", HELPERS_PATH)
 helpers = importlib.util.module_from_spec(spec)
 sys.modules["helpers"] = helpers
 spec.loader.exec_module(helpers)
 
-# --- AI helper import ---
+# --- Load AI Helper ---
 AI_HELPER_PATH = os.path.join(os.path.dirname(__file__), "src", "ai_helper.py")
 spec_ai = importlib.util.spec_from_file_location("ai_helper", AI_HELPER_PATH)
 ai_helper = importlib.util.module_from_spec(spec_ai)
 spec_ai.loader.exec_module(ai_helper)
 
-
+# Import helper functions
 load_df = helpers.load_df
 save_record = helpers.save_record
 score_risk = helpers.score_risk
 auto_assign = helpers.auto_assign
 build_matrix = helpers.build_matrix
 
-
+# --- Streamlit and other imports ---
 import streamlit as st
 import pandas as pd
 import numpy as np
@@ -32,9 +33,8 @@ import matplotlib.pyplot as plt
 # ----------------------------
 # 🧩 Basic Authentication System
 # ----------------------------
-import streamlit as st
 
-# Hardcoded credentials (you can change this)
+# Hardcoded credentials (demo)
 VALID_USERNAME = "admin"
 VALID_PASSWORD = "secure120"
 
@@ -42,12 +42,15 @@ VALID_PASSWORD = "secure120"
 if "authenticated" not in st.session_state:
     st.session_state.authenticated = False
 
-# If not logged in, show login form
+# --- LOGIN PAGE ---
 if not st.session_state.authenticated:
+    st.set_page_config(page_title="GRC Risk Dashboard", layout="wide")
     st.title("🔐 GRC Dashboard Login")
 
-st.info("👤 **Demo Credentials**  \nUsername: `admin`  \nPassword: `secure120`")
+    # Display demo credentials
+    st.info("👤 **Demo Credentials**  \nUsername: `admin`  \nPassword: `secure120`")
 
+    # Login form
     with st.form("login_form"):
         username = st.text_input("Username")
         password = st.text_input("Password", type="password")
@@ -60,19 +63,25 @@ st.info("👤 **Demo Credentials**  \nUsername: `admin`  \nPassword: `secure120`
                 st.rerun()
             else:
                 st.error("❌ Invalid username or password.")
+
     st.stop()
 
-
+# ------------------------------------------------------
+# DASHBOARD PAGE
+# ------------------------------------------------------
 st.set_page_config(page_title="GRC Risk Dashboard", layout="wide")
 st.title("🛡️ GRC Risk Dashboard")
 
-# Logout button in sidebar
+# Logout button
 if st.sidebar.button("🚪 Logout"):
     st.session_state.authenticated = False
     st.rerun()
 
 st.sidebar.info("Use this dashboard to log and analyze organizational risks.")
 
+# ------------------------------------------------------
+# Risk Entry Form
+# ------------------------------------------------------
 with st.form("risk_form"):
     st.subheader("Log a New Risk")
 
@@ -133,8 +142,8 @@ with st.form("risk_form"):
         save_record(record)
         st.success("✅ Risk saved successfully!")
 
-        # Refresh page after submission
-        st.experimental_rerun()
+        # Refresh page
+        st.rerun()
 
 # ------------------------------------------------------
 # Display Saved Risks
@@ -144,8 +153,6 @@ df = load_df()
 st.subheader("📋 Saved Risks")
 if not df.empty:
     st.dataframe(df, use_container_width=True)
-else:
-    st.warning("No risks logged yet. Please add a new risk above.")
 
     # --- Download button ---
     csv = df.to_csv(index=False).encode('utf-8')
@@ -156,6 +163,8 @@ else:
         mime="text/csv",
         use_container_width=True
     )
+else:
+    st.warning("No risks logged yet. Please add a new risk above.")
 
 # ------------------------------------------------------
 # Generate and Display Heatmap
