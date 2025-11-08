@@ -219,28 +219,42 @@ else:
     st.warning("No risks logged yet. Please add a new risk above.")
 
 # ------------------------------------------------------
-# Generate and Display Heatmap
+# 🎨 Generate and Display a Sleek Heatmap
 # ------------------------------------------------------
 if not df.empty:
     matrix = build_matrix(df)
 
-    fig, ax = plt.subplots(figsize=(7, 6))
+    st.markdown("---")
+    st.subheader("🔥 Risk Heatmap")
+
+    # Adjusted size and style
+    fig, ax = plt.subplots(figsize=(4.8, 4.2))
     sns.heatmap(
         matrix,
         annot=True,
         fmt="d",
-        cmap="YlOrRd",
-        cbar=True,
+        cmap="coolwarm",  # more vibrant than YlOrRd
+        cbar=False,
+        square=True,
+        linewidths=0.5,
+        linecolor="black",
         xticklabels=np.arange(1, 6),
         yticklabels=list(reversed(np.arange(1, 6))),
         ax=ax
     )
-    ax.set_xlabel("Likelihood")
-    ax.set_ylabel("Impact")
-    ax.set_title("Risk Heatmap (Likelihood × Impact)")
 
-    st.subheader("🔥 Risk Heatmap")
-    st.pyplot(fig)
+    # Cleaner labels and design tweaks
+    ax.set_xlabel("Likelihood", fontsize=10, labelpad=8, color="#E0E6ED")
+    ax.set_ylabel("Impact", fontsize=10, labelpad=8, color="#E0E6ED")
+    ax.set_title("📊 Risk Matrix Overview", fontsize=12, fontweight="bold", color="#E0E6ED", pad=10)
+    ax.tick_params(axis='both', labelsize=9, colors="#E0E6ED")
+
+    # Dark background for matching theme
+    fig.patch.set_facecolor('#0E1117')
+    ax.set_facecolor('#11141B')
+
+    # Center heatmap nicely
+    st.pyplot(fig, use_container_width=False)
 
 # ------------------------------------------------------
 # AI Risk Mitigation Panel
