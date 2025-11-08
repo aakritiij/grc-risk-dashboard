@@ -192,7 +192,7 @@ else:
     st.warning("No risks logged yet. Please add a new risk above.")
 
 # ------------------------------------------------------
-# ⚡ Interactive Plotly Risk Heatmap (Polished & Fixed)
+# ⚡ Interactive Plotly Risk Heatmap (100% Streamlit Cloud Safe)
 # ------------------------------------------------------
 import plotly.graph_objects as go
 
@@ -202,35 +202,29 @@ if not df.empty:
     st.subheader("🔥 Interactive Risk Heatmap")
 
     likelihood_labels = [1, 2, 3, 4, 5]
-    impact_labels = [5, 4, 3, 2, 1]  # top-down for correct orientation
+    impact_labels = [5, 4, 3, 2, 1]  # reverse to show high impact at top
 
-    # Create interactive heatmap
+    # Build interactive heatmap
     fig = go.Figure(
         data=go.Heatmap(
             z=matrix,
             x=likelihood_labels,
             y=impact_labels,
             colorscale=[
-                [0.0, "#00A6A6"],  # teal (low)
-                [0.5, "#FFD166"],  # amber (medium)
-                [1.0, "#EF476F"],  # red (high)
+                [0.0, "#00A6A6"],  # teal for low
+                [0.5, "#FFD166"],  # amber for medium
+                [1.0, "#EF476F"],  # red for high
             ],
             hovertemplate=(
                 "<b>Likelihood:</b> %{x}<br>"
                 "<b>Impact:</b> %{y}<br>"
                 "<b>Risk Count:</b> %{z}<extra></extra>"
             ),
-            showscale=True,
-            colorbar=dict(
-                title="Risk Level",
-                titlefont=dict(color="#EAEAEA", size=12),
-                tickfont=dict(color="#EAEAEA", size=10),
-                thickness=12
-            ),
+            showscale=True  # just keep default colorbar, no overrides
         )
     )
 
-    # Layout styling
+    # Layout
     fig.update_layout(
         title=dict(
             text="📊 Organizational Risk Exposure Matrix",
@@ -262,18 +256,15 @@ if not df.empty:
         margin=dict(l=60, r=40, t=70, b=60),
     )
 
-    # Add risk zone labels
-    annotations = [
-        dict(x=1.2, y=4.8, text="Low", showarrow=False, font=dict(color="#6EE7B7", size=10)),
-        dict(x=3, y=3, text="Medium", showarrow=False, font=dict(color="#FFD166", size=10)),
-        dict(x=4.8, y=1.2, text="High", showarrow=False, font=dict(color="#FF6B6B", size=10)),
-    ]
-    fig.update_layout(annotations=annotations)
+    # Risk zone text overlays
+    fig.add_annotation(x=1.1, y=4.9, text="Low", showarrow=False, font=dict(color="#6EE7B7", size=10))
+    fig.add_annotation(x=3, y=3, text="Medium", showarrow=False, font=dict(color="#FFD166", size=10))
+    fig.add_annotation(x=4.8, y=1.2, text="High", showarrow=False, font=dict(color="#FF6B6B", size=10))
 
     st.plotly_chart(fig, use_container_width=True)
+
 else:
     st.warning("No risks logged yet. Please add a new risk above.")
-
 
 # ------------------------------------------------------
 # 🤖 AI Risk Mitigation Panel
