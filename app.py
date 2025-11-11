@@ -1,4 +1,4 @@
-# app.py — Log ingestion + IOC analysis replacement for manual risk form
+# app.py — Log ingestion + IOC analysis + AI insights stored in risk records
 from src.ai_helper import predict_attack_and_mitigation
 import os
 import re
@@ -115,6 +115,7 @@ def create_risk_record_from_ioc(ioc_type: str, ioc_value: str, context_snippet: 
         "risk_score": risk_score,
         "risk_cell": f"{likelihood}x{impact}",
         "owner": "AutoDetector",
+        "attack_type": "",
         "mitigation": "",
         "timestamp": pd.Timestamp.now()
     }
@@ -201,17 +202,28 @@ if uploaded_file:
                     likelihood, impact = 3, 3
                     score = 50
 
-                record = create_risk_record_from_ioc(ioc_type, ioc_value, snippet, likelihood, impact)
-                save_record(record)
-
                 # --- AI Attack Prediction + Mitigation ---
                 try:
                     mitigation_info = predict_attack_and_mitigation(ioc_value, ioc_type, score, snippet)
                     st.sidebar.markdown(f"**AI Insights for {ioc_value}:**")
                     st.sidebar.info(mitigation_info)
+
+                    import re
+                    attack_type_match = re.search(r"Attack Type:\s*\*\*(.*?)\*\*", mitigation_info)
+                    attack_type = attack_type_match.group(1).strip() if attack_type_match else "Unknown"
+                    mitigation_lines = [line.strip("-• ").strip() for line in mitigation_info.split("\n") if line.strip().startswith("-")]
+                    mitigation_text = "; ".join(mitigation_lines[:3]) if mitigation_lines else "N/A"
+
                 except Exception as e:
                     st.sidebar.warning(f"AI suggestion unavailable: {e}")
+                    attack_type = "N/A"
+                    mitigation_text = "N/A"
 
+                record = create_risk_record_from_ioc(ioc_type, ioc_value, snippet, likelihood, impact)
+                record["attack_type"] = attack_type
+                record["mitigation"] = mitigation_text
+
+                save_record(record)
                 saved_count += 1
 
             st.success(f"✅ Saved {saved_count} IOCs as risk records.")
@@ -223,8 +235,12 @@ if uploaded_file:
 df = load_df()
 st.markdown("---")
 st.subheader("📋 Saved Risks")
+
 if not df.empty:
-    st.dataframe(df, use_container_width=True)
+    expected_cols = ["risk_name", "attack_type", "likelihood", "impact", "risk_score", "mitigation", "owner", "timestamp"]
+    cols = [c for c in expected_cols if c in df.columns] + [c for c in df.columns if c not in expected_cols]
+    st.dataframe(df[cols], use_container_width=True)
+
     csv = df.to_csv(index=False).encode("utf-8")
     st.download_button("📥 Download CSV", data=csv, file_name="risks.csv", mime="text/csv")
 else:
