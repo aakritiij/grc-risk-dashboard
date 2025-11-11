@@ -1,4 +1,5 @@
 # app.py — Log ingestion + IOC analysis replacement for manual risk form
+from src.ai_helper import predict_attack_and_mitigation
 import os
 import re
 import uuid
@@ -234,6 +235,14 @@ if uploaded_file:
 
                 record = create_risk_record_from_ioc(ioc_type, ioc_value, snippet, likelihood, impact)
                 save_record(record)
+                # --- AI Attack Prediction and Mitigation ---
+try:
+    mitigation_info = predict_attack_and_mitigation(ioc_value, ioc_type, score or 50, snippet)
+    st.sidebar.markdown(f"**AI Insights for {ioc_value}:**")
+    st.sidebar.info(mitigation_info)
+except Exception as e:
+    st.sidebar.warning(f"AI suggestion unavailable: {e}")
+
                 saved_count += 1
 
             st.success(f"Saved {saved_count} IOCs as risk records.")
