@@ -47,3 +47,28 @@ def get_mitigation_suggestions(risk_description: str) -> list[str]:
         "Enable continuous monitoring for unusual activity.",
     ]
     return random.sample(fallback, 3)
+
+import openai
+
+def predict_attack_and_mitigation(ioc, ioc_type, abuse_score, context=""):
+    prompt = f"""
+    Given the following IOC details:
+    - Type: {ioc_type}
+    - Value: {ioc}
+    - Abuse Confidence Score: {abuse_score}
+    - Context: {context}
+
+    Predict:
+    1. The most likely attack category.
+    2. Three specific mitigation steps.
+    Format as JSON with keys: attack_category, mitigations.
+    """
+
+    response = openai.ChatCompletion.create(
+        model="gpt-4o-mini",  # or your available model
+        messages=[{"role": "user", "content": prompt}],
+        temperature=0.4
+    )
+
+    return response.choices[0].message["content"]
+
