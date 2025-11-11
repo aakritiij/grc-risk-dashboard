@@ -210,40 +210,36 @@ if uploaded_file:
         else:
             saved_count = 0
             for ioc_type, ioc_value in to_save:
-                # context snippet: find surrounding text for first occurrence
-                pos = content.find(ioc_value)
-                start = max(0, pos - 120)
-                end = min(len(content), pos + 120)
-                snippet = content[start:end] if pos != -1 else f"Auto-detected {ioc_type} {ioc_value}"
+    pos = content.find(ioc_value)
+    start = max(0, pos - 120)
+    end = min(len(content), pos + 120)
+    snippet = content[start:end] if pos != -1 else f"Auto-detected {ioc_type} {ioc_value}"
 
-                # default mapping if no abuseipdb data
-                if ioc_type == "IPs":
-                    # try to find ip in ip_results
-                    score = None
-                    for r in ip_results:
-                        if r.get("ip") == ioc_value and "abuseConfidenceScore" in r:
-                            score = int(r.get("abuseConfidenceScore", 0))
-                            break
-                    if score is None:
-                        # no API data available: neutral default
-                        likelihood, impact = 3, 3
-                    else:
-                        likelihood, impact = map_score_to_li_impact(score)
-                else:
-                    # for non-IP IOCs, assign medium default; may be improved later
-                    likelihood, impact = 3, 3
+    if ioc_type == "IPs":
+        score = None
+        for r in ip_results:
+            if r.get("ip") == ioc_value and "abuseConfidenceScore" in r:
+                score = int(r.get("abuseConfidenceScore", 0))
+                break
+        if score is None:
+            likelihood, impact = 3, 3
+        else:
+            likelihood, impact = map_score_to_li_impact(score)
+    else:
+        likelihood, impact = 3, 3
 
-                record = create_risk_record_from_ioc(ioc_type, ioc_value, snippet, likelihood, impact)
-                save_record(record)
-                # --- AI Attack Prediction and Mitigation ---
-try:
-    mitigation_info = predict_attack_and_mitigation(ioc_value, ioc_type, score or 50, snippet)
-    st.sidebar.markdown(f"**AI Insights for {ioc_value}:**")
-    st.sidebar.info(mitigation_info)
-except Exception as e:
-    st.sidebar.warning(f"AI suggestion unavailable: {e}")
+    record = create_risk_record_from_ioc(ioc_type, ioc_value, snippet, likelihood, impact)
+    save_record(record)
 
-                saved_count += 1
+    # --- AI Attack Prediction + Mitigation (same level as save_record) ---
+    try:
+        mitigation_info = predict_attack_and_mitigation(ioc_value, ioc_type, score or 50, snippet)
+        st.sidebar.markdown(f"**AI Insights for {ioc_value}:**")
+        st.sidebar.info(mitigation_info)
+    except Exception as e:
+        st.sidebar.warning(f"AI suggestion unavailable: {e}")
+
+    saved_count += 1
 
             st.success(f"Saved {saved_count} IOCs as risk records.")
             # refresh page to load updated risks and heatmap
