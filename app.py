@@ -7,7 +7,7 @@ import importlib.util
 import sys
 from typing import Dict, Any
 
-# --- robust import of helpers and ai_helper (works even with tricky package paths) ---
+# --- robust import of helpers and ai_helper ---
 def load_module_from_path(name: str, path: str):
     spec = importlib.util.spec_from_file_location(name, path)
     module = importlib.util.module_from_spec(spec)
@@ -20,7 +20,6 @@ HELPERS_PATH = os.path.join(BASE_DIR, "src", "grc_risk_dashboard", "helpers.py")
 AI_HELPER_PATH = os.path.join(BASE_DIR, "src", "ai_helper.py")
 
 helpers = load_module_from_path("helpers", HELPERS_PATH)
-# ai_helper may not be used yet; load for future AI integration
 try:
     ai_helper = load_module_from_path("ai_helper", AI_HELPER_PATH)
 except Exception:
@@ -36,7 +35,6 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import requests
-import matplotlib.pyplot as plt
 import plotly.graph_objects as go
 
 st.set_page_config(page_title="GRC Risk Dashboard", layout="wide")
@@ -70,7 +68,7 @@ def extract_iocs(text: str) -> Dict[str, list]:
     }
 
 def check_abuseipdb(ip: str, api_key: str) -> Dict[str, Any]:
-    """Query AbuseIPDB for ip reputation. Returns dict with abuseConfidenceScore or error."""
+    """Query AbuseIPDB for IP reputation."""
     if not api_key:
         return {"ip": ip, "error": "no_api_key"}
     try:
@@ -93,35 +91,25 @@ def check_abuseipdb(ip: str, api_key: str) -> Dict[str, Any]:
         return {"ip": ip, "error": str(e)}
 
 def map_score_to_li_impact(score: int) -> tuple:
-    """
-    Map a 0-100 threat score to Likelihood and Impact on 1-5 scale.
-    Thresholds are adjustable.
-    """
+    """Map 0–100 threat score to Likelihood/Impact scale."""
     if score >= 80:
-        likelihood = 5
-        impact = 5
+        return 5, 5
     elif score >= 60:
-        likelihood = 4
-        impact = 4
+        return 4, 4
     elif score >= 40:
-        likelihood = 3
-        impact = 3
+        return 3, 3
     elif score >= 20:
-        likelihood = 2
-        impact = 2
+        return 2, 2
     else:
-        likelihood = 1
-        impact = 1
-    return likelihood, impact
+        return 1, 1
 
 def create_risk_record_from_ioc(ioc_type: str, ioc_value: str, context_snippet: str, likelihood: int, impact: int) -> dict:
-    """Build the standard risk record dictionary expected by save_record."""
     rid = str(uuid.uuid4())
     risk_score = score_risk(likelihood, impact)
-    record = {
+    return {
         "risk_id": rid,
         "risk_name": f"{ioc_type}: {ioc_value}",
-        "risk_description": context_snippet[:400],  # keep it short
+        "risk_description": context_snippet[:400],
         "likelihood": likelihood,
         "impact": impact,
         "risk_score": risk_score,
@@ -130,71 +118,60 @@ def create_risk_record_from_ioc(ioc_type: str, ioc_value: str, context_snippet: 
         "mitigation": "",
         "timestamp": pd.Timestamp.now()
     }
-    return record
 
 # -----------------------
-# Upload UI (replaces manual form)
+# Upload + IOC Analysis
 # -----------------------
 st.markdown("## 1) Upload logs to auto-detect risks")
-uploaded_file = st.file_uploader("Upload log file (.txt, .log, .csv). Multiple uploads not supported in this version.", type=["txt", "log", "csv"])
-
+uploaded_file = st.file_uploader("Upload log file (.txt, .log, .csv)", type=["txt", "log", "csv"])
 ABUSEIPDB_KEY = st.secrets.get("ABUSEIPDB_API_KEY", None)
 
 if uploaded_file:
     raw_bytes = uploaded_file.read()
-    try:
-        content = raw_bytes.decode("utf-8", errors="ignore")
-    except Exception:
-        content = str(raw_bytes)
+    content = raw_bytes.decode("utf-8", errors="ignore")
 
     st.info(f"Processing {uploaded_file.name} ...")
     iocs = extract_iocs(content)
 
-    # show counts and sample
+    # IOC Summary
     st.markdown("### Extracted IOCs summary")
     cols = st.columns(5)
-    keys = ["IPs", "URLs", "Domains", "Hashes", "Emails"]
-    for i, k in enumerate(keys):
+    for i, k in enumerate(["IPs", "URLs", "Domains", "Hashes", "Emails"]):
         with cols[i]:
             st.metric(label=k, value=len(iocs.get(k, [])))
     st.markdown("---")
 
-    # display extracted lists (collapsible)
     with st.expander("Show extracted IOCs"):
-        for k in keys:
+        for k in ["IPs", "URLs", "Domains", "Hashes", "Emails"]:
             vals = iocs.get(k, [])
             st.write(f"**{k}** ({len(vals)})")
             if vals:
                 st.code("\n".join(vals))
 
-    # reputation checks for IPs
+    # AbuseIPDB Reputation
     ip_results = []
     if iocs["IPs"]:
         st.markdown("### IP Reputation (AbuseIPDB)")
         if not ABUSEIPDB_KEY:
-            st.warning("Add ABUSEIPDB_API_KEY in Streamlit secrets to enable live IP reputation checks.")
+            st.warning("Add ABUSEIPDB_API_KEY in Streamlit secrets for reputation checks.")
         else:
             progress = st.progress(0)
             for idx, ip in enumerate(iocs["IPs"], 1):
                 res = check_abuseipdb(ip, ABUSEIPDB_KEY)
                 ip_results.append(res)
-                progress.progress(min(100, int((idx / len(iocs["IPs"])) * 100)))
+                progress.progress(int((idx / len(iocs["IPs"])) * 100))
             progress.empty()
             df_ip = pd.DataFrame(ip_results)
             st.dataframe(df_ip, use_container_width=True)
-            # quick bar chart of abuse score
             try:
                 st.bar_chart(df_ip.set_index("ip")["abuseConfidenceScore"])
             except Exception:
                 pass
-    else:
-        st.info("No IPs found for reputation checks.")
 
-    # Let user select which extracted IOCs should become risks
+    # Select & Save IOCs as Risks
     st.markdown("---")
     st.markdown("## 2) Select which IOCs to convert into risks")
     to_save = []
-    # prepare options grouped by type
     for t in ["IPs", "URLs", "Domains", "Hashes", "Emails"]:
         items = iocs.get(t, [])
         if items:
@@ -202,99 +179,63 @@ if uploaded_file:
             for val in chosen:
                 to_save.append((t, val))
 
-    # Option: automatic scoring without API
-    auto_save = st.checkbox("Auto-save selected IOCs as risks", value=False)
-    if st.button("Save selected IOCs as risks"):
+    if st.button("💾 Save selected IOCs as risks"):
         if not to_save:
             st.warning("Pick at least one IOC to save.")
         else:
             saved_count = 0
             for ioc_type, ioc_value in to_save:
-    pos = content.find(ioc_value)
-    start = max(0, pos - 120)
-    end = min(len(content), pos + 120)
-    snippet = content[start:end] if pos != -1 else f"Auto-detected {ioc_type} {ioc_value}"
+                pos = content.find(ioc_value)
+                start = max(0, pos - 120)
+                end = min(len(content), pos + 120)
+                snippet = content[start:end] if pos != -1 else f"Auto-detected {ioc_type} {ioc_value}"
 
-    if ioc_type == "IPs":
-        score = None
-        for r in ip_results:
-            if r.get("ip") == ioc_value and "abuseConfidenceScore" in r:
-                score = int(r.get("abuseConfidenceScore", 0))
-                break
-        if score is None:
-            likelihood, impact = 3, 3
-        else:
-            likelihood, impact = map_score_to_li_impact(score)
-    else:
-        likelihood, impact = 3, 3
+                if ioc_type == "IPs":
+                    score = None
+                    for r in ip_results:
+                        if r.get("ip") == ioc_value and "abuseConfidenceScore" in r:
+                            score = int(r.get("abuseConfidenceScore", 0))
+                            break
+                    likelihood, impact = map_score_to_li_impact(score or 50)
+                else:
+                    likelihood, impact = 3, 3
+                    score = 50
 
-    record = create_risk_record_from_ioc(ioc_type, ioc_value, snippet, likelihood, impact)
-    save_record(record)
+                record = create_risk_record_from_ioc(ioc_type, ioc_value, snippet, likelihood, impact)
+                save_record(record)
 
-    # --- AI Attack Prediction + Mitigation (same level as save_record) ---
-    try:
-        mitigation_info = predict_attack_and_mitigation(ioc_value, ioc_type, score or 50, snippet)
-        st.sidebar.markdown(f"**AI Insights for {ioc_value}:**")
-        st.sidebar.info(mitigation_info)
-    except Exception as e:
-        st.sidebar.warning(f"AI suggestion unavailable: {e}")
+                # --- AI Attack Prediction + Mitigation ---
+                try:
+                    mitigation_info = predict_attack_and_mitigation(ioc_value, ioc_type, score, snippet)
+                    st.sidebar.markdown(f"**AI Insights for {ioc_value}:**")
+                    st.sidebar.info(mitigation_info)
+                except Exception as e:
+                    st.sidebar.warning(f"AI suggestion unavailable: {e}")
 
-    saved_count += 1
+                saved_count += 1
 
-            st.success(f"Saved {saved_count} IOCs as risk records.")
-            # refresh page to load updated risks and heatmap
+            st.success(f"✅ Saved {saved_count} IOCs as risk records.")
             st.experimental_rerun()
 
-    if auto_save and to_save:
-        # a simple auto-save path without pressing Save button
-        saved_count = 0
-        for ioc_type, ioc_value in to_save:
-            pos = content.find(ioc_value)
-            start = max(0, pos - 120)
-            end = min(len(content), pos + 120)
-            snippet = content[start:end] if pos != -1 else f"Auto-detected {ioc_type} {ioc_value}"
-            if ioc_type == "IPs":
-                score = None
-                for r in ip_results:
-                    if r.get("ip") == ioc_value and "abuseConfidenceScore" in r:
-                        score = int(r.get("abuseConfidenceScore", 0))
-                        break
-                if score is None:
-                    likelihood, impact = 3, 3
-                else:
-                    likelihood, impact = map_score_to_li_impact(score)
-            else:
-                likelihood, impact = 3, 3
-            record = create_risk_record_from_ioc(ioc_type, ioc_value, snippet, likelihood, impact)
-            save_record(record)
-            saved_count += 1
-        st.success(f"Auto-saved {saved_count} IOCs as risk records.")
-        st.experimental_rerun()
-
 # -----------------------
-# Existing: show saved risks and heatmap (unchanged)
+# Display Saved Risks + Heatmap
 # -----------------------
 df = load_df()
 st.markdown("---")
 st.subheader("📋 Saved Risks")
 if not df.empty:
     st.dataframe(df, use_container_width=True)
-
     csv = df.to_csv(index=False).encode("utf-8")
     st.download_button("📥 Download CSV", data=csv, file_name="risks.csv", mime="text/csv")
 else:
     st.warning("No risks logged yet. Upload logs to auto-generate risks.")
 
-# Heatmap (use existing build_matrix)
+# Heatmap
 if not df.empty:
     matrix = build_matrix(df)
-    # Ensure numeric matrix
-    try:
-        numeric_matrix = pd.DataFrame(matrix).apply(pd.to_numeric, errors="coerce").fillna(0)
-    except Exception:
-        numeric_matrix = pd.DataFrame(matrix)
-    likelihood_labels = [1,2,3,4,5]
-    impact_labels = [5,4,3,2,1]
+    numeric_matrix = pd.DataFrame(matrix).apply(pd.to_numeric, errors="coerce").fillna(0)
+    likelihood_labels = [1, 2, 3, 4, 5]
+    impact_labels = [5, 4, 3, 2, 1]
 
     fig = go.Figure(
         data=go.Heatmap(
@@ -305,7 +246,7 @@ if not df.empty:
             hovertemplate="<b>Likelihood:</b> %{x}<br><b>Impact:</b> %{y}<br><b>Risks:</b> %{z}<extra></extra>",
             showscale=True,
             zmin=0,
-            zmax=float(numeric_matrix.values.max()) if numeric_matrix.values.size>0 else 1,
+            zmax=float(numeric_matrix.values.max()) if numeric_matrix.values.size > 0 else 1,
             colorbar_title="Risk Level"
         )
     )
